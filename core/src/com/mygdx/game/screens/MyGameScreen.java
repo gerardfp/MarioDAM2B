@@ -1,8 +1,15 @@
-package com.mygdx.game;
+package com.mygdx.game.screens;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Screen;
 
 public class MyGameScreen implements Screen {
+    Game game;
+
+    MyGameScreen(Game game){
+        this.game = game;
+    }
+
     @Override
     public void show() {
 

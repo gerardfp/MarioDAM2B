@@ -1,13 +1,17 @@
-package com.mygdx.game;
+package com.mygdx.game.screens;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Array;
+import com.mygdx.game.characters.Ball;
+import com.mygdx.game.Controls;
+import com.mygdx.game.characters.Player;
 
-public class GameScreen {
+public class GameScreen extends MyGameScreen {
     SpriteBatch batch;
     TextureRegion imgBackground;
     TextureRegion imgBall;
@@ -20,8 +24,12 @@ public class GameScreen {
 
     float newBallTimer;
 
+    GameScreen(Game game){
+        super(game);
+    }
+
     @Override
-    public void create () {
+    public void show () {
         batch = new SpriteBatch();
         TextureAtlas textureAtlas = new TextureAtlas("superpang.txt");
         imgPlayer = textureAtlas.findRegion("shoot");
@@ -36,7 +44,7 @@ public class GameScreen {
     }
 
     @Override
-    public void render () {
+    public void render (float delta) {
         Gdx.gl.glClearColor(1, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
