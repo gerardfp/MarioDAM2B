@@ -5,13 +5,12 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.mygdx.game.Assets;
-import com.mygdx.game.characters.Ball;
 import com.mygdx.game.Controls;
+import com.mygdx.game.characters.Ball;
 import com.mygdx.game.characters.Player;
 
 import java.util.Random;
@@ -23,6 +22,7 @@ public class GameScreen extends MyGameScreen {
 
     Array<Ball> balls = new Array<Ball>();
     Player player;
+
 
     float newBallTimer;
     FitViewport viewport;
@@ -68,9 +68,15 @@ public class GameScreen extends MyGameScreen {
         batch.begin();
         batch.draw(Assets.imgBackground, 0, 0, VIEW_PORT_WIDTH, VIEW_PORT_HEIGHT);
         for(Ball ball: balls) {
-            batch.draw(Assets.imgBalls[ball.type], ball.position.x, ball.position.y);
+            batch.draw(Assets.imgBalls[ball.type], ball.position.x, ball.position.y, Assets.imgBalls[ball.type].getRegionWidth()*2, Assets.imgBalls[ball.type].getRegionHeight()*2);
         }
         batch.draw(Assets.walkAnimation.getKeyFrame(player.stateTime, true), player.position.x, player.position.y, player.size.x, player.size.y);
+        if(player.isShooting) {
+            TextureRegion tr = Assets.harpoon.getKeyFrame(player.stateTime, true);
+            tr.setRegionHeight((int) player.harpoon.altura);
+
+            batch.draw(tr, player.harpoon.position.x, player.harpoon.position.y);
+        }
         batch.end();
     }
 
@@ -111,6 +117,7 @@ public class GameScreen extends MyGameScreen {
 
     void updatePlayer(float delta){
         player.stateTime += delta;
+        player.harpoon.altura += delta*100;
 
         if(Controls.isLeftPressed()){
             player.position.x -= player.velocity.x;
@@ -118,6 +125,11 @@ public class GameScreen extends MyGameScreen {
 
         if(Controls.isRightPressed()){
             player.position.x += player.velocity.x;
+        }
+
+        if(Controls.isShootPressed()){
+            player.isShooting = true;
+            player.harpoon.position.set(player.position);
         }
     }
 
