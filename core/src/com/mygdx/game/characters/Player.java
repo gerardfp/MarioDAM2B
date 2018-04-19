@@ -15,8 +15,8 @@ public class Player {
     public Player(){
         size.x = 64;
         size.y = 64;
-        position.x = 500;
-        position.y = 20;
+        position.x = 256;
+        position.y = 10;
         velocity.x = 5;
     }
 }

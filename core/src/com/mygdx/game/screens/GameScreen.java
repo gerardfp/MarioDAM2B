@@ -6,6 +6,9 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.Intersector;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.mygdx.game.Assets;
@@ -27,8 +30,10 @@ public class GameScreen extends MyGameScreen {
     float newBallTimer;
     FitViewport viewport;
     OrthographicCamera camera;
-    int VIEW_PORT_WIDTH = 1024; //PPM
-    int VIEW_PORT_HEIGHT = 512;
+    int VIEW_PORT_WIDTH = 512; //PPM
+    int VIEW_PORT_HEIGHT = 256;
+
+    int WORLD_MARGIN = 10;
 
     Random random = new Random();
 
@@ -66,14 +71,14 @@ public class GameScreen extends MyGameScreen {
         batch.setProjectionMatrix(camera.combined);
 
         batch.begin();
-        batch.draw(Assets.imgBackground, 0, 0, VIEW_PORT_WIDTH, VIEW_PORT_HEIGHT);
+        batch.draw(Assets.imgBackground, 0, 0);
         for(Ball ball: balls) {
-            batch.draw(Assets.imgBalls[ball.type], ball.position.x, ball.position.y, Assets.imgBalls[ball.type].getRegionWidth()*2, Assets.imgBalls[ball.type].getRegionHeight()*2);
+            batch.draw(Assets.imgBalls[ball.type], ball.position.x, ball.position.y);
         }
-        batch.draw(Assets.walkAnimation.getKeyFrame(player.stateTime, true), player.position.x, player.position.y, player.size.x, player.size.y);
+        batch.draw(Assets.walkAnimation.getKeyFrame(player.stateTime, true), player.position.x, player.position.y);
         if(player.isShooting) {
             TextureRegion tr = Assets.harpoon.getKeyFrame(player.stateTime, true);
-            tr.setRegionHeight((int) player.harpoon.altura);
+            tr.setRegionHeight((int) player.harpoon.height);
 
             batch.draw(tr, player.harpoon.position.x, player.harpoon.position.y);
         }
@@ -85,6 +90,7 @@ public class GameScreen extends MyGameScreen {
         addNewBall();
         updateBalls();
         updatePlayer(delta);
+        updateHarpoon(delta);
     }
 
     void updateTimers(float delta){
@@ -92,13 +98,19 @@ public class GameScreen extends MyGameScreen {
     }
 
     void addNewBall(){
-        if(newBallTimer > 1f){
+        if(newBallTimer > 3f){
             balls.add(new Ball(10, 100, 3, 14, random.nextInt(5)));
             newBallTimer = 0;
         }
     }
 
     void updateBalls(){
+        Rectangle harpoonRectangle = new Rectangle(
+                (int) player.harpoon.position.x,
+                (int) player.harpoon.position.y,
+                Assets.harpoon.getKeyFrame(0).getRegionWidth(),
+                Assets.harpoon.getKeyFrame(0).getRegionHeight());
+
         for(Ball ball: balls) {
             ball.velocity.y += gravity;
 
@@ -112,12 +124,23 @@ public class GameScreen extends MyGameScreen {
             if (ball.position.x < 0 || ball.position.x > VIEW_PORT_WIDTH - Assets.imgBalls[ball.type].getRegionWidth()) {
                 ball.velocity.x *= -1;
             }
+
+            Circle ballCircle = new Circle(
+                    ball.position.x+Assets.imgBalls[ball.type].getRegionWidth()/2,
+                    ball.position.y+Assets.imgBalls[ball.type].getRegionHeight()/2,
+                    Assets.imgBalls[ball.type].getRegionWidth()/2
+                    );
+
+            if(player.isShooting && Intersector.overlaps(ballCircle, harpoonRectangle)){
+                System.out.println("INTERSECCION!!!!");
+                player.isShooting = false;
+            }
         }
     }
 
     void updatePlayer(float delta){
         player.stateTime += delta;
-        player.harpoon.altura += delta*100;
+
 
         if(Controls.isLeftPressed()){
             player.position.x -= player.velocity.x;
@@ -127,9 +150,18 @@ public class GameScreen extends MyGameScreen {
             player.position.x += player.velocity.x;
         }
 
-        if(Controls.isShootPressed()){
+        if(Controls.isShootPressed() && !player.isShooting){
             player.isShooting = true;
             player.harpoon.position.set(player.position);
+            player.harpoon.height = 0;
+        }
+    }
+
+    void updateHarpoon(float delta){
+        player.harpoon.height += delta*100;
+
+        if(player.harpoon.position.y + player.harpoon.height >= VIEW_PORT_HEIGHT-WORLD_MARGIN){
+            player.isShooting = false;
         }
     }
 

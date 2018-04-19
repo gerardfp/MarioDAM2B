@@ -9,7 +9,7 @@ public class Harpoon {
 
     public float stateTime;
 
-    public float altura;
+    public float height;
 
     public Harpoon(){
         size.x = 64;
