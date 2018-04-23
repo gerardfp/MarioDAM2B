@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
@@ -16,24 +17,29 @@ import com.mygdx.game.Controls;
 import com.mygdx.game.characters.Ball;
 import com.mygdx.game.characters.Player;
 
+import java.util.Iterator;
 import java.util.Random;
 
 public class GameScreen extends MyGameScreen {
-    SpriteBatch batch;
+    boolean DEBUG = true;
 
-    float gravity = -.2f;
+    SpriteBatch batch;
+    ShapeRenderer shapeRenderer;
+
+    float gravity = -.1f;
 
     Array<Ball> balls = new Array<Ball>();
     Player player;
 
 
     float newBallTimer;
+    float newBallDelay;
     FitViewport viewport;
     OrthographicCamera camera;
-    int VIEW_PORT_WIDTH = 512; //PPM
-    int VIEW_PORT_HEIGHT = 256;
+    int VIEW_PORT_WIDTH; //PPM
+    int VIEW_PORT_HEIGHT;
 
-    int WORLD_MARGIN = 10;
+    int WORLD_MARGIN = 8;
 
     Random random = new Random();
 
@@ -45,6 +51,12 @@ public class GameScreen extends MyGameScreen {
     @Override
     public void show () {
         batch = new SpriteBatch();
+        shapeRenderer = new ShapeRenderer();
+
+        Assets.load();
+
+        VIEW_PORT_WIDTH = Assets.imgBackground.getRegionWidth();
+        VIEW_PORT_HEIGHT = Assets.imgBackground.getRegionHeight();
 
         camera = new OrthographicCamera();
         viewport = new FitViewport(VIEW_PORT_WIDTH, VIEW_PORT_HEIGHT, camera);
@@ -52,13 +64,7 @@ public class GameScreen extends MyGameScreen {
         camera.position.y = VIEW_PORT_HEIGHT /2;
         camera.update();
 
-        Assets.load();
-
-        player = new Player();
-
-        balls.add(new Ball(10,10,1,12, random.nextInt(5)));
-        balls.add(new Ball(100,10,2,6, random.nextInt(5)));
-        balls.add(new Ball(10,100,3,14, random.nextInt(5)));
+        player = new Player(VIEW_PORT_WIDTH/2, WORLD_MARGIN);
     }
 
     @Override
@@ -83,6 +89,21 @@ public class GameScreen extends MyGameScreen {
             batch.draw(tr, player.harpoon.position.x, player.harpoon.position.y);
         }
         batch.end();
+
+
+        if(DEBUG){
+            shapeRenderer.setProjectionMatrix(camera.combined);
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            shapeRenderer.setColor(0,1,0,1);
+            for(Ball ball: balls) {
+                Circle circle = ball.getCircle();
+                shapeRenderer.circle(circle.x, circle.y, circle.radius);
+            }
+            Rectangle rectangle = player.harpoon.getRectangle();
+            shapeRenderer.rect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+            shapeRenderer.end();
+
+        }
     }
 
     void update(float delta){
@@ -98,20 +119,22 @@ public class GameScreen extends MyGameScreen {
     }
 
     void addNewBall(){
-        if(newBallTimer > 3f){
-            balls.add(new Ball(10, 100, 3, 14, random.nextInt(5)));
+        if(newBallTimer > newBallDelay){
+            Ball ball = new Ball(random.nextInt(VIEW_PORT_WIDTH),VIEW_PORT_HEIGHT,1,0, random.nextInt(5));
+            balls.add(ball);
+            newBallDelay = ball.newBallDelays[ball.type];
+
             newBallTimer = 0;
         }
     }
 
     void updateBalls(){
-        Rectangle harpoonRectangle = new Rectangle(
-                (int) player.harpoon.position.x,
-                (int) player.harpoon.position.y,
-                Assets.harpoon.getKeyFrame(0).getRegionWidth(),
-                Assets.harpoon.getKeyFrame(0).getRegionHeight());
 
-        for(Ball ball: balls) {
+        Iterator<Ball> ballIterator = balls.iterator();
+
+        while(ballIterator.hasNext()) {
+            Ball ball = ballIterator.next();
+
             ball.velocity.y += gravity;
 
             ball.position.y += ball.velocity.y;
@@ -125,15 +148,14 @@ public class GameScreen extends MyGameScreen {
                 ball.velocity.x *= -1;
             }
 
-            Circle ballCircle = new Circle(
-                    ball.position.x+Assets.imgBalls[ball.type].getRegionWidth()/2,
-                    ball.position.y+Assets.imgBalls[ball.type].getRegionHeight()/2,
-                    Assets.imgBalls[ball.type].getRegionWidth()/2
-                    );
-
-            if(player.isShooting && Intersector.overlaps(ballCircle, harpoonRectangle)){
-                System.out.println("INTERSECCION!!!!");
+            if(player.isShooting && Intersector.overlaps(ball.getCircle(), player.harpoon.getRectangle())){
+                ballIterator.remove();
+                if(ball.type != 4) {
+                    balls.add(new Ball(ball.position.x, ball.position.y, 1, 1.2f, ball.type+1));
+                    balls.add(new Ball(ball.position.x, ball.position.y, -1, 1.2f, ball.type+1));
+                }
                 player.isShooting = false;
+                player.harpoon.height = 0;
             }
         }
     }

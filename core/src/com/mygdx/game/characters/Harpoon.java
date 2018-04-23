@@ -1,6 +1,8 @@
 package com.mygdx.game.characters;
 
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.mygdx.game.Assets;
 
 public class Harpoon {
     public Vector2 position = new Vector2();
@@ -17,5 +19,13 @@ public class Harpoon {
         position.x = 500;
         position.y = 20;
         velocity.x = 5;
+    }
+
+    public Rectangle getRectangle(){
+        return new Rectangle(
+            (int) position.x,
+            (int) position.y,
+            Assets.harpoon.getKeyFrame(0).getRegionWidth(),
+            Assets.harpoon.getKeyFrame(0).getRegionHeight());
     }
 }
