@@ -4,6 +4,7 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -16,6 +17,7 @@ import com.mygdx.game.Assets;
 import com.mygdx.game.Controls;
 import com.mygdx.game.characters.Ball;
 import com.mygdx.game.characters.Player;
+
 
 import java.util.Iterator;
 import java.util.Random;
@@ -31,7 +33,6 @@ public class GameScreen extends MyGameScreen {
     Array<Ball> balls = new Array<Ball>();
     Player player;
 
-
     float newBallTimer;
     float newBallDelay;
     FitViewport viewport;
@@ -46,7 +47,6 @@ public class GameScreen extends MyGameScreen {
     GameScreen(Game game){
         super(game);
     }
-
 
     @Override
     public void show () {
@@ -81,13 +81,24 @@ public class GameScreen extends MyGameScreen {
         for(Ball ball: balls) {
             batch.draw(Assets.imgBalls[ball.type], ball.position.x, ball.position.y);
         }
-        batch.draw(Assets.walkAnimation.getKeyFrame(player.stateTime, true), player.position.x, player.position.y);
+
+        if(player.state == Player.State.IDLE) {
+            batch.draw(Assets.idleAnimation.getKeyFrame(player.stateTime, true), player.position.x, player.position.y);
+        } else if(player.state == Player.State.WALKING) {
+            batch.draw(Assets.walkAnimation.getKeyFrame(player.stateTime, true), player.position.x, player.position.y);
+        } else if(player.state == Player.State.SHOOTING) {
+            batch.draw(Assets.shootAnimation.getKeyFrame(player.stateTime, true), player.position.x, player.position.y);
+        } else if(player.state == Player.State.DEAD) {
+            batch.draw(Assets.deadAnimation.getKeyFrame(player.stateTime, true), player.position.x, player.position.y);
+        }
+
         if(player.isShooting) {
             TextureRegion tr = Assets.harpoon.getKeyFrame(player.stateTime, true);
             tr.setRegionHeight((int) player.harpoon.height);
 
             batch.draw(tr, player.harpoon.position.x, player.harpoon.position.y);
         }
+
         batch.end();
 
 
@@ -120,7 +131,7 @@ public class GameScreen extends MyGameScreen {
 
     void addNewBall(){
         if(newBallTimer > newBallDelay){
-            Ball ball = new Ball(random.nextInt(VIEW_PORT_WIDTH),VIEW_PORT_HEIGHT,1,0, random.nextInt(5));
+            Ball ball = new Ball(VIEW_PORT_WIDTH-5,VIEW_PORT_HEIGHT,1,0, random.nextInt(5));
             balls.add(ball);
             newBallDelay = ball.newBallDelays[ball.type];
 
@@ -140,19 +151,26 @@ public class GameScreen extends MyGameScreen {
             ball.position.y += ball.velocity.y;
             ball.position.x += ball.velocity.x;
 
-            if (ball.position.y < 0) {
+            if (ball.position.y < WORLD_MARGIN) {
                 ball.velocity.y = ball.reboundSpeeds[ball.type];
+                ball.position.y = WORLD_MARGIN;
             }
 
-            if (ball.position.x < 0 || ball.position.x > VIEW_PORT_WIDTH - Assets.imgBalls[ball.type].getRegionWidth()) {
+            if (ball.position.x < WORLD_MARGIN){
                 ball.velocity.x *= -1;
+                ball.position.x = WORLD_MARGIN;
+            }
+
+            if(ball.position.x > VIEW_PORT_WIDTH - WORLD_MARGIN - Assets.imgBalls[ball.type].getRegionWidth()) {
+                ball.velocity.x *= -1;
+                ball.position.x = VIEW_PORT_WIDTH - WORLD_MARGIN - Assets.imgBalls[ball.type].getRegionWidth();
             }
 
             if(player.isShooting && Intersector.overlaps(ball.getCircle(), player.harpoon.getRectangle())){
                 ballIterator.remove();
                 if(ball.type != 4) {
-                    balls.add(new Ball(ball.position.x, ball.position.y, 1, 1.2f, ball.type+1));
-                    balls.add(new Ball(ball.position.x, ball.position.y, -1, 1.2f, ball.type+1));
+                    balls.add(new Ball(ball.position.x, ball.position.y, 1, 2f, ball.type+1));
+                    balls.add(new Ball(ball.position.x, ball.position.y, -1, 2f, ball.type+1));
                 }
                 player.isShooting = false;
                 player.harpoon.height = 0;
@@ -163,16 +181,18 @@ public class GameScreen extends MyGameScreen {
     void updatePlayer(float delta){
         player.stateTime += delta;
 
-
         if(Controls.isLeftPressed()){
+            player.state = Player.State.WALKING;
             player.position.x -= player.velocity.x;
         }
 
         if(Controls.isRightPressed()){
+            player.state = Player.State.WALKING;
             player.position.x += player.velocity.x;
         }
 
         if(Controls.isShootPressed() && !player.isShooting){
+            player.state = Player.State.SHOOTING;
             player.isShooting = true;
             player.harpoon.position.set(player.position);
             player.harpoon.height = 0;
