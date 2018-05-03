@@ -4,7 +4,6 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -15,23 +14,23 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.mygdx.game.Assets;
 import com.mygdx.game.Controls;
+import com.mygdx.game.HUD;
 import com.mygdx.game.characters.Ball;
 import com.mygdx.game.characters.Player;
-
 
 import java.util.Iterator;
 import java.util.Random;
 
 public class GameScreen extends MyGameScreen {
-    boolean DEBUG = true;
+    boolean DEBUG = false;
 
-    SpriteBatch batch;
+    SpriteBatch batch, hudBatch;
     ShapeRenderer shapeRenderer;
 
     float gravity = -.1f;
 
-    Array<Ball> balls = new Array<Ball>();
-    Player player;
+    public Array<Ball> balls = new Array<Ball>();
+    public Player player;
 
     float newBallTimer;
     float newBallDelay;
@@ -42,6 +41,8 @@ public class GameScreen extends MyGameScreen {
 
     int WORLD_MARGIN = 8;
 
+    HUD hud;
+
     Random random = new Random();
 
     GameScreen(Game game){
@@ -51,6 +52,8 @@ public class GameScreen extends MyGameScreen {
     @Override
     public void show () {
         batch = new SpriteBatch();
+        hudBatch = new SpriteBatch();
+
         shapeRenderer = new ShapeRenderer();
 
         Assets.load();
@@ -63,6 +66,8 @@ public class GameScreen extends MyGameScreen {
         camera.position.x = VIEW_PORT_WIDTH /2;
         camera.position.y = VIEW_PORT_HEIGHT /2;
         camera.update();
+
+        hud = new HUD(hudBatch, this);
 
         player = new Player(VIEW_PORT_WIDTH/2, WORLD_MARGIN);
     }
@@ -78,6 +83,9 @@ public class GameScreen extends MyGameScreen {
 
         batch.begin();
         batch.draw(Assets.imgBackground, 0, 0);
+
+
+
         for(Ball ball: balls) {
             batch.draw(Assets.imgBalls[ball.type], ball.position.x, ball.position.y);
         }
@@ -98,9 +106,9 @@ public class GameScreen extends MyGameScreen {
 
             batch.draw(tr, player.harpoon.position.x, player.harpoon.position.y);
         }
-
         batch.end();
 
+        hud.render();
 
         if(DEBUG){
             shapeRenderer.setProjectionMatrix(camera.combined);

@@ -17,6 +17,8 @@ public class Player {
     public Harpoon harpoon = new Harpoon();
     public boolean isShooting;
 
+    public int lifes = 3;
+
     public Player(float px, float py){
         position.x = px;
         position.y = py;

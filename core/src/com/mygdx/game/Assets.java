@@ -9,6 +9,7 @@ public class Assets {
     public static TextureRegion[] imgBalls = new TextureRegion[5];
     public static Animation<TextureRegion> walkAnimation, idleAnimation, shootAnimation, deadAnimation;
     public static Animation<TextureRegion> harpoon;
+    public static TextureRegion lives;
 
     public static void load(){
         TextureAtlas textureAtlas = new TextureAtlas("superpang.txt");
@@ -25,5 +26,7 @@ public class Assets {
         }
 
         imgBackground = textureAtlas.findRegion("background");
+
+        lives = textureAtlas.findRegion("lives");
     }
 }

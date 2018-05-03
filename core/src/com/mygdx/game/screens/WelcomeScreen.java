@@ -6,12 +6,12 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
-public class WelcomScreen extends MyGameScreen {
+public class WelcomeScreen extends MyGameScreen {
     SpriteBatch spriteBatch;
     Texture logotipo;
     float startGameTimer;
 
-    public WelcomScreen(Game game){
+    public WelcomeScreen(Game game){
         super(game);
     }
 
@@ -26,7 +26,7 @@ public class WelcomScreen extends MyGameScreen {
         startGameTimer += delta;
 
         if(startGameTimer > 1){
-            game.setScreen(new GameScreen(game));
+            game.setScreen(new MenuScreen(game));
         }
 
         Gdx.gl.glClearColor(0, 0, 0, 1);
